@@ -3,15 +3,17 @@ import dash_mantine_components as dmc
 import dash_ag_grid as dag
 import pandas as pd
 import plotly.express as px
+import dash
 from datetime import datetime
+
+dash.register_page(__name__)
 
 df = pd.read_csv("https://raw.githubusercontent.com/Coding-with-Adam/response-reporting-dashboard/main/pages/reports.csv")
 fig1 = px.histogram(df, x='platform')
 fig2 = px.histogram(df, x='flag-type', facet_col='platform')
 fig3 = px.histogram(df, x='response-type', facet_col='platform')
 
-app = Dash()
-app.layout = dmc.MantineProvider(
+layout = dmc.MantineProvider(
     theme={"colorScheme": "dark"},
     withGlobalStyles=True,
     children=[
@@ -30,6 +32,3 @@ app.layout = dmc.MantineProvider(
     ]
 )
 
-
-if __name__ == '__main__':
-    app.run_server(debug=True)
