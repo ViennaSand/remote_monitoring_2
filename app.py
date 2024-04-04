@@ -3,9 +3,23 @@
 # Here is some code to get started:
 import dash
 from dash import Dash, html, dcc
+from flask_login import LoginManager, UserMixin, login_user, login_required
+
+app = Dash(__name__, use_pages=True,suppress_callback_exceptions=True)
+server = app.server
+
+login_manager = LoginManager()
+login_manager.init_app(server)
+
+class User(UserMixin):
+    def __init__(self,id):
+        self.id = id
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User(user_id)
 
 
-app = Dash(__name__, use_pages=True)
 
 app.layout = html.Div([
     html.H1('Response Reporting Platform -- VOST Europe'),
