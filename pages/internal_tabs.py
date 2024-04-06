@@ -11,7 +11,6 @@ from flask_login import login_required
 
 dash.register_page(__name__)
 
-#auth = dash_auth.BasicAuth(dash.get_app(),  {'bugsbunny':'topsecret'})
 dic_users = {'bugsbunny':'topsecret'}
 
 user_name = dmc.TextInput(id='user_name',label="User Name:", placeholder="Your User Name",style={"width": 250})
