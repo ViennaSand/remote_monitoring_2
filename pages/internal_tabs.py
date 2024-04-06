@@ -4,12 +4,23 @@ from datetime import datetime
 import dash_ag_grid as dag
 import pandas as pd
 import dash
+from dash_auth import public_callback
+from flask import render_template, redirect, url_for, flash
 from flask_login import login_required
 
 
-#dash.register_page(__name__)
+dash.register_page(__name__)
 
+#auth = dash_auth.BasicAuth(dash.get_app(),  {'bugsbunny':'topsecret'})
+dic_users = {'bugsbunny':'topsecret'}
 
+user_name = dmc.TextInput(id='user_name',label="User Name:", placeholder="Your User Name",style={"width": 250})
+
+password = dmc.PasswordInput(
+    id = 'password',
+    label="Your password:",
+    style={"width": 250},
+    placeholder="Your password")
 
 df = pd.read_csv("https://raw.githubusercontent.com/Coding-with-Adam/response-reporting-dashboard/main/pages/reports.csv")
 df["response-day"] = pd.to_datetime(df["response-day"]).dt.strftime('%Y-%m-%d')
@@ -67,22 +78,7 @@ cols = [
     }
 ]
 
-
-
-
-
-layout = html.Div([
-    dcc.Location(id='url-private', refresh=False),
-    html.H1('Private - editable table'),
-    dcc.Input(id='password-input', type='password', placeholder='Enter password'),
-    dmc.MantineProvider(
-        id='private-content',
-        theme={"colorScheme": "dark"},
-        withGlobalStyles=True,
-        children=[
-            html.H1("Transparency Reporting Platform - Internal"),
-            #dmc.Center(html.H4('This page content to be visible after vetted user has logged in.')),
-            dag.AgGrid(
+updatable_table = dag.AgGrid(
                 id="reports-table",
                 rowData=df.to_dict("records"),
                 columnDefs=cols,
@@ -92,40 +88,60 @@ layout = html.Div([
                                  "paginationPageSize": 7,
                                  "undoRedoCellEditing": True,
                                  "rowSelection": "multiple"}
-            ),
-            dmc.Button(
+            )
+
+delete_row = dmc.Button(
                 id="delete-row-btn",
                 children="Delete row",
-            ),
-            dmc.Button(
+            )
+
+add_row = dmc.Button(
                 id="add-row-btn",
                 children="Add row",
-            ),
-        ]
-    )
-])
+            )
 
-@login_required
-@dash.callback(Output('private-content', 'reports-table'),
-                    #Output("reports-table", "rowData",allow_duplicate=True),
-               Input('password-input',component_property='value'),
-               allow_duplicate=True
-               )
-def display_private_content(password):
-    if password=='topsecret':
-        return dag.AgGrid(
-            rowData=df.to_dict("records"),
-            columnDefs=[{"field": i} for i in df.columns],
-            columnSize="sizeToFit",
-            defaultColDef={"filter": True},
-            dashGridOptions={"pagination": True, "paginationPageSize":7},
-        )
+
+
+layout = html.Div(
+    [
+        dmc.Tabs(
+            [
+                dmc.TabsList(
+                    [
+                        dmc.Tab("Login", value="login"),
+                        dmc.Tab("Update Dashboard" ,id = "private_tab",  value="internal",disabled=True),
+                    ]
+                ),
+            ],
+            id="tabs-example",
+            value="login",
+        ),
+        html.Div(id="tabs-content", style={"paddingTop": 10}),
+    ]
+)
+
+
+@callback(Output("tabs-content", "children"), Input("tabs-example", "value"))
+def render_content(active):
+    if active == "login":
+        return [dmc.Text("Please login to get access to the editable dashboard:"),user_name,password]
     else:
-        return "To get access to this page, you need to enter a valid password!"
+        return [updatable_table,delete_row,add_row]
+@callback(Output("private_tab", "disabled"),
+          Input("user_name", "value"),
+          Input("password", "value")
+          )
+def update_tabs(user_name,password):
+    if (user_name,password) in dic_users.items():
+        return False
+    else:
+        #print("the pair user/password does not exist")
+        return True
 
 
-"""
-@dash.callback(
+
+
+@callback(
     Output("reports-table", "deleteSelectedRows",allow_duplicate=True),
     Output("reports-table", "rowData",allow_duplicate=True),
     Input("delete-row-btn", "n_clicks"),
@@ -154,5 +170,4 @@ def update_table(n_dlt, n_add, data):
 
     elif ctx.triggered_id == "delete-row-btn":
         return True, no_update
-"""
 

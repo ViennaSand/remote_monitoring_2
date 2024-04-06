@@ -5,7 +5,9 @@ import dash
 from dash import Dash, html, dcc
 from flask_login import LoginManager, UserMixin, login_user, login_required
 
-app = Dash(__name__, use_pages=True,suppress_callback_exceptions=True)
+app = Dash(__name__, use_pages=True,suppress_callback_exceptions=True,
+           prevent_initial_callbacks='initial_duplicate')
+
 server = app.server
 
 login_manager = LoginManager()
